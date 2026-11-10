@@ -1,0 +1,8 @@
+
+streamlit>=1.40,<2
+transformers>=4.48,<5
+peft>=0.14,<0.18
+accelerate>=1,<2
+torch
+safetensors
+huggingface-hub
