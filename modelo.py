@@ -1,33 +1,39 @@
 
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from peft import PeftModel
+from llama_cpp import Llama
+from huggingface_hub import hf_hub_download
+import os
 
-# Modelo original e nosso adaptador treinado
-MODELO_BASE = "Qwen/Qwen2.5-1.5B-Instruct"
+# Repositório do nosso modelo compactado
+REPOSITORIO = "johnrobert21/fiap-fase4-historias-gguf"
 
-MODELO_FIAP = (
-    "johnrobert21/fiap-fase4-gerador-historias"
-)
+ARQUIVO_MODELO = "qwen15b_historias_Q4_K_M.gguf"
 
 
 def carregar_modelo():
-    """Carrega o Qwen e nosso adaptador LoRA."""
+    """Carrega nosso Qwen 1.5B ajustado e compactado."""
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        MODELO_FIAP
+    # Procurar primeiro o modelo local
+    caminho_local = os.path.join(
+        "modelos",
+        ARQUIVO_MODELO
     )
 
-    modelo = AutoModelForCausalLM.from_pretrained(
-        MODELO_BASE,
-        dtype=torch.float32
+    if os.path.isfile(caminho_local):
+        caminho = caminho_local
+    else:
+        # Baixar automaticamente do Hugging Face
+        caminho = hf_hub_download(
+            repo_id=REPOSITORIO,
+            filename=ARQUIVO_MODELO
+        )
+
+    # Carregar a IA compactada
+    modelo = Llama(
+        model_path=caminho,
+        n_ctx=1024,
+        n_threads=4,
+        n_gpu_layers=0,
+        verbose=False
     )
 
-    modelo = PeftModel.from_pretrained(
-        modelo,
-        MODELO_FIAP
-    )
-
-    modelo.eval()
-
-    return tokenizer, modelo
+    return modelo
